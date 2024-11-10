@@ -3,13 +3,38 @@
         <div class="col-md-8"> 
             <textarea id="code-screen"></textarea>
         </div>
-        <div class="col-md-4" id="chatbox"> 
+        <div class="col-md-4" id="chatbox">
+          <div class="card card-primary">
+            <div class="card-header">
+              Chat Room
+              <span class="float-end" id="chatbox-username">
+                {{# if user}} 
+                  {{user.name}}
+                {{/if}}
+              </span>
+            </div>
+            <div class="card-body">
+              <ul class="media-list" style="height: 300px; overflow-y: scroll" id="chat-listMessages">
+              </ul>
+            </div>
+            <div class="card-footer">
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="Enter Message" id="userMessage">
+                <span class="input-group-btn">
+                  <button type="button" class="btn btn-primary" onclick="sendMessage()">Send</button>
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
     </div>
 </div>
+<input type="text" value="{{roomId}}" id="roomId">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js" integrity="sha512-8RnEqURPUc5aqFEN04aQEiPlSAdE0jlFS/9iGgUyNtwFnSKCXhmB6ZTNl7LnDtDWKabJIASzXrzD0K+LYexU9g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/javascript/javascript.min.js" integrity="sha512-I6CdJdruzGtvDyvdO4YsiAq+pkWf2efgd1ZUSK2FnM/u2VuRASPC7GowWQrWyjxCZn6CT89s3ddGI+be0Ak9Fg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+<script src="/socket.io/socket.io.js"></script>
 
 <script>
     var editor = CodeMirror.fromTextArea(document.getElementById("code-screen"), {
@@ -17,4 +42,34 @@
         theme: "monokai"
     })
 
+    var roomId = $('#roomId').val();
+
+    var socket = io.connect('http://localhost:3000');
+    socket.emit('joinRoom', {room: roomId});
+    var username = $("#chatbox-username").val();
+    if (username === "") {
+      var userId = Math.floor(Math.random() * 9999).toString();
+      username = "User" + userId;
+      $("#chatbox-username").text(username);
+    }
+
+    var userMessage = function(name, text) {
+      return ('<li class="media"> <div class="media-body" <div class="media">' +
+        '<div class=media-body"' +
+        '<b>' + name + '</b>: ' + text + 
+        '<hr/> </div> </div> </li>'
+      )
+    }
+
+    var sendMessage = function() {
+      var userMessage = $('#userMessage').val();
+      socket.emit('chatMessage', {
+        message: userMessage,
+        username: username
+      })
+      $('#userMessage').val("");
+    }
+    socket.on('chatMessage', function(data) {
+      $('#chat-listMessages').append(userMessage(data.username, data.message));
+    })
 </script>
