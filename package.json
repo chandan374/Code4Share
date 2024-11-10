@@ -15,6 +15,7 @@
     "mongoose": "^6.5.0",
     "morgan": "~1.9.1",
     "nodemailer": "^3.1.5",
+    "ot": "git+https://github.com/Operational-transformation/ot.js.git",
     "socket.io": "^1.7.3"
   },
   "devDependencies": {

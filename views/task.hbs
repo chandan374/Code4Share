@@ -1,7 +1,7 @@
 <div>
     <div class="row mt-3">
         <div class="col-md-8"> 
-            <textarea id="code-screen"></textarea>
+            <textarea id="code-screen">{{content}}</textarea>
         </div>
         <div class="col-md-4" id="chatbox">
           <div class="card card-primary">
@@ -34,18 +34,43 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js" integrity="sha512-8RnEqURPUc5aqFEN04aQEiPlSAdE0jlFS/9iGgUyNtwFnSKCXhmB6ZTNl7LnDtDWKabJIASzXrzD0K+LYexU9g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/mode/javascript/javascript.min.js" integrity="sha512-I6CdJdruzGtvDyvdO4YsiAq+pkWf2efgd1ZUSK2FnM/u2VuRASPC7GowWQrWyjxCZn6CT89s3ddGI+be0Ak9Fg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+<script src="/plugins/ot/ot.js"></script>
+
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
+    var EditorClient = ot.EditorClient;
+    var SocketIOAdapter = ot.SocketIOAdapter;
+    var CodeMirrorAdapter = ot.CodeMirrorAdapter;
+
     var editor = CodeMirror.fromTextArea(document.getElementById("code-screen"), {
         lineNumbers: true,
         theme: "monokai"
     })
 
+    var code = $("#code-screen").val();
+
+
+    var cmClient;
+    function init(str, revision, clients, serverAdapters) {
+      if (!code) {
+        editor.setValue(str);
+      }
+      editor.setValue(str);
+      cmClient = window.cmClient = new EditorClient(
+        revision, clients, serverAdapters, new CodeMirrorAdapter(editor)
+      );
+    };
     var roomId = $('#roomId').val();
 
     var socket = io.connect('http://localhost:3000');
-    socket.emit('joinRoom', {room: roomId});
+  
+    socket.on('doc', function(obj) {
+      init(obj.str, obj.revision, obj.clients, new SocketIOAdapter(socket));
+    })
+
+    socket.emit('joinRoom', {room: roomId, username: username});
+
     var username = $("#chatbox-username").val();
     if (username === "") {
       var userId = Math.floor(Math.random() * 9999).toString();
